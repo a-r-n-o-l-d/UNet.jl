@@ -3,6 +3,9 @@ uuid = "76fcf035-82d7-4832-bb3a-93f42258e03f"
 authors = ["Arnold"]
 version = "0.1.0"
 
+[deps]
+Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
+
 [compat]
 julia = "1.6"
 
