@@ -38,7 +38,6 @@ one level to another.
 Usually encoders start with a 'MaxPool', except the first encoder
 
 ```
-                                                                                
 +---------+                                                          +---------+
 |encoder 1|                                                          |decoder 1|
 +---------+                                                          +---------+
@@ -50,7 +49,7 @@ Usually encoders start with a 'MaxPool', except the first encoder
               |-------------------------------------------------->^             
               |                                                   |             
               |   +---------+                        +---------+  |             
-              +--->encoder 3|                        |decoder 3|--+             
+              +-->|encoder 3|                        |decoder 3|--+             
                   +---------+                        +---------+                
                        |--------------------------------->^                     
                        |                                  |                     
@@ -61,7 +60,7 @@ Usually encoders start with a 'MaxPool', except the first encoder
                                 |                 |                             
                                 |    +-------+    |                             
                                 +--->|bridge |----+                             
-                                     +-------+                                                                    
+                                     +-------+                                  
 ```
 See also [`chcat`](@ref), [`Flux.SkipConnection`](@ref).
 """
