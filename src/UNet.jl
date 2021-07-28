@@ -28,8 +28,7 @@ chcat(x...) = cat(x...; dims = (x1 |> size |> length) - 1)
     uchain(;input, output, encoders, decoders, bridge, connection)
 
 Build a `Chain` with U-Net like architecture.
-                                                                                
-                                                                                
+
 +---------+                                                          +---------+
 |  Input  |                                                          | Output  |
 +---------+                                                          +---------+
@@ -53,6 +52,7 @@ Build a `Chain` with U-Net like architecture.
                              |      +-------+     |                             
                              +----->|Bridge |-----+                             
                                     +-------+                                                                            
+See also [`chcat`](@ref).
 """
 function uchain(;input, output, encoders, decoders, bridge, connection)
     length(encoders) == length(decoders) || println("pouet")
