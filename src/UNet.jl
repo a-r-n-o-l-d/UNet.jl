@@ -27,58 +27,72 @@ chcat(x...) = cat(x...; dims = (x[1] |> size |> length) - 1)
 """
     uchain(;input, output, encoders, decoders, bridge, connection)
 
-Build a `Chain` with U-Net like architecture.
+Build a `Chain` with [U-Net](https://arxiv.org/abs/1505.04597v1) like 
+architecture. `encoders` and `decoders` are arrays of encoding/decoding blocks, 
+from top to bottom (see diagram below). `bridge` is the bottom part of U-Net 
+architecture. 
+Each level of the U-Net is connected through a 2-argument callable `connection`.
+`connection` could be an array in case the way levels are connected vary from 
+one level to another.
 
+```
 +---------+                                                          +---------+
-|  Input  |                                                          | Output  |
+|encoder 1|                                                          |decoder 1|
 +---------+                                                          +---------+
      |------------------------------------------------------------------->^     
      |                                                                    |     
      |   +---------+                                         +---------+  |     
-     +-->|Encoder 1|                                         |Decoder 1|--+     
+     +-->|encoder 2|                                         |decoder 2|--+     
          +---------+                                         +---------+        
              |--------------------------------------------------->^             
              |                                                    |             
              |   +---------+                         +---------+  |             
-             +-->|Encoder 2|                         |Decoder 2|--+             
+             +-->|encoder 3|                         |decoder 3|--+             
                  +---------+                         +---------+                
                      |----------------------------------->^                     
                      |                                    |                     
                      |   +---------+         +---------+  |                     
-                     +-->|Encoder 3|         |Decoder 3|--+                     
+                     +-->|encoder 4|         |decoder 4|--+                     
                          +---------+         +---------+                        
                              |------------------->^                             
                              |                    |                             
                              |      +-------+     |                             
-                             +----->|Bridge |-----+                             
-                                    +-------+                                                                            
-See also [`chcat`](@ref).
+                             +----->|bridge |-----+                             
+                                    +-------+                                   
+```
+See also [`chcat`](@ref), [`Flux.SkipConnection`](@ref).
 """
-function uchain(;input, output, encoders, decoders, bridge, connection)
-    length(encoders) == length(decoders) || println("pouet")
+function uchain(;encoders, decoders, bridge, connection)
+    length(encoders) == length(decoders) ||
+        throw(ArgumentError("The number of encoders should be equal to the number of decoders."))
+
+    if isa(connection, AbstractArray)
+        length(encoders) == length(connection) ||
+            throw(ArgumentError("The number of connections should be equal to the number of encoders/decoders."))
+    else
+        connection = repeat([connection], length(encoders))
+    end
     
-    connect(enc::T, prl, dec::T) where {T<:Union{Chain, AbstractArray}} =
-       Chain(enc..., prl, dec...)
+    connect(enc::Chain, prl, dec::Chain) = Chain(enc..., prl, dec...)
+    
+    connect(enc::AbstractArray, prl, dec::AbstractArray) = Chain(enc..., prl, dec...)
+    
+    connect(enc::Chain, prl, dec::AbstractArray) = Chain(enc..., prl, dec...)
+    
+    connect(enc::AbstractArray, prl, dec::Chain) = Chain(enc..., prl, dec...)
 
     connect(enc, prl, dec) = Chain(enc, prl, dec)
-    
-    getconn(i, c::AbstractArray) = c[i]
-    
-    getconn(i, c) = c
-    
-    getconn(c::AbstractArray) = c[end]
-    
-    getconn(c) = c
-    
-    ite = reverse(eachindex(encoders))
-    c = getconn(connection)
-    l = SkipConnection(bridge, c)
-    for i ∈ ite
-        l = connect(encoders[i], l, decoders[i])
-        c = getconn(i, connection)
+
+    ite = zip(reverse(encoders[2:end]), reverse(decoders[2:end]), 
+              reverse(connection[1:(end - 1)]))
+    l = SkipConnection(bridge, connection[end])
+    for (e, d, c) ∈ ite
+        l = connect(e, l, d)
         l = SkipConnection(l, c)
     end
-    connect(input, l, output)
+    connect(encoders[1], l, decoders[1])
 end
+
+
 
 end
