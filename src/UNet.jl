@@ -59,7 +59,7 @@ Usually encoders start with a 'MaxPool', except the first encoder
                                 +--->|bridge |----+                             
                                      +-------+                                  
 ```
-See also [`chcat`](@ref), [`Flux.SkipConnection`](@ref).
+See also [`chcat`](@ref).
 """
 function uchain(;encoders, decoders, bridge, connection)
     length(encoders) == length(decoders) ||
