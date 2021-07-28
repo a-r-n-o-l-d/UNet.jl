@@ -35,7 +35,10 @@ Each level of the U-Net is connected through a 2-argument callable `connection`.
 `connection` could be an array in case the way levels are connected vary from 
 one level to another.
 
+Usually encoders start with a 'MaxPool', except the first encoder
+
 ```
+                                                                                
 +---------+                                                          +---------+
 |encoder 1|                                                          |decoder 1|
 +---------+                                                          +---------+
@@ -44,31 +47,33 @@ one level to another.
      |   +---------+                                         +---------+  |     
      +-->|encoder 2|                                         |decoder 2|--+     
          +---------+                                         +---------+        
-             |--------------------------------------------------->^             
-             |                                                    |             
-             |   +---------+                         +---------+  |             
-             +-->|encoder 3|                         |decoder 3|--+             
-                 +---------+                         +---------+                
-                     |----------------------------------->^                     
-                     |                                    |                     
-                     |   +---------+         +---------+  |                     
-                     +-->|encoder 4|         |decoder 4|--+                     
-                         +---------+         +---------+                        
-                             |------------------->^                             
-                             |                    |                             
-                             |      +-------+     |                             
-                             +----->|bridge |-----+                             
-                                    +-------+                                   
+              |-------------------------------------------------->^             
+              |                                                   |             
+              |   +---------+                        +---------+  |             
+              +--->encoder 3|                        |decoder 3|--+             
+                  +---------+                        +---------+                
+                       |--------------------------------->^                     
+                       |                                  |                     
+                       |   +---------+       +---------+  |                     
+                       +-->|encoder 4|       |decoder 4|--+                     
+                           +---------+       +---------+                        
+                                |---------------->^                             
+                                |                 |                             
+                                |    +-------+    |                             
+                                +--->|bridge |----+                             
+                                     +-------+                                                                    
 ```
 See also [`chcat`](@ref), [`Flux.SkipConnection`](@ref).
 """
 function uchain(;encoders, decoders, bridge, connection)
     length(encoders) == length(decoders) ||
-        throw(ArgumentError("The number of encoders should be equal to the number of decoders."))
+        throw(ArgumentError(
+            "The number of encoders should be equal to the number of decoders."))
 
     if isa(connection, AbstractArray)
         length(encoders) == length(connection) ||
-            throw(ArgumentError("The number of connections should be equal to the number of encoders/decoders."))
+            throw(ArgumentError(
+                "The number of connections should be equal to the number of encoders/decoders."))
     else
         connection = repeat([connection], length(encoders))
     end
