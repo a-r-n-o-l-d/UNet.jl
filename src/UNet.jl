@@ -12,17 +12,20 @@ Image data should be stored in WHCN order (width, height, channels, batch) or
 WHDCN (width, height, depth, channels, batch) in 3D context. Channels are
 assumed to be the penultimate dimension.
 
-# Examples
-```@example
-x1 = rand(32, 32, 4, 6) # a batch of 6 images (32x32) with 4 channels 
-x2 = rand(32, 32, 4, 6) # a batch of 6 images (32x32) with 4 channels
-chcat(x1, x2) |> size
+# Example
+```jldoctest
+julia> x1 = rand(32, 32, 4, 6); # a batch of 6 images (32x32) with 4 channels
+
+julia> x2 = rand(32, 32, 4, 6); # a batch of 6 images (32x32) with 4 channels
+
+julia> chcat(x1, x2) |> size
+(32, 32, 8, 6)
 ```
 """
 chcat(x...) = cat(x...; dims = (x[1] |> size |> length) - 1)
 
 """
-    uchain(;input, output, encoders, decoders, bridge, connection)
+    uchain(;encoders, decoders, bridge, connection)
 
 Build a `Chain` with [U-Net](https://arxiv.org/abs/1505.04597v1) like 
 architecture. `encoders` and `decoders` are arrays of encoding/decoding blocks, 
@@ -32,7 +35,11 @@ Each level of the U-Net is connected through a 2-argument callable `connection`.
 `connection` could be an array in case the way levels are connected vary from 
 one level to another.
 
-Usually encoders start with a 'MaxPool', except the first encoder
+Notes :
+- usually encoder blocks start with a 'MaxPool' to downsample image by 2, except
+the first encoder.
+- usually decoder blocks end with a 'ConvTranspose' to upsample image by 2,
+except the first decoder.
 
 ```
 +---------+                                                          +---------+
