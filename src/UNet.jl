@@ -22,7 +22,7 @@ julia> chcat(x1, x2) |> size
 (32, 32, 8, 6)
 ```
 """
-chcat(x...) = cat(x...; dims = (x1 |> size |> length) - 1)
+chcat(x...) = cat(x...; dims = (x[1] |> size |> length) - 1)
 
 """
     uchain(;input, output, encoders, decoders, bridge, connection)
