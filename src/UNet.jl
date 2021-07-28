@@ -5,10 +5,12 @@ using Flux
 export chcat, uchain
 
 """
-    chcat(x1, x2)
+    chcat(x...)
 
-Concatenate two arrays along channel dimension. The channel dimension is assumed
-to be the penultimate dimension.
+Concatenate the image data along the dimension corresponding to the channels.
+Image data should be stored in WHCN order (width, height, channels, batch) or
+WHDCN (width, height, depth, channels, batch) in 3D context. Channels are
+assumed to be the penultimate dimension.
 
 # Examples
 ```jldoctest
@@ -20,12 +22,39 @@ julia> chcat(x1, x2) |> size
 (32, 32, 8, 6)
 ```
 """
-chcat(x1, x2) = cat(x1, x2, dims = (x1 |> size |> length) - 1)
+chcat(x...) = cat(x...; dims = (x1 |> size |> length) - 1)
 
 """
+    uchain(;input, output, encoders, decoders, bridge, connection)
 
+Build a `Chain` with U-Net like architecture.
+                                                                                
+                                                                                
++---------+                                                          +---------+
+|  Input  |                                                          | Output  |
++---------+                                                          +---------+
+     |------------------------------------------------------------------->^     
+     |                                                                    |     
+     |   +---------+                                         +---------+  |     
+     +-->|Encoder 1|                                         |Decoder 1|--+     
+         +---------+                                         +---------+        
+             |--------------------------------------------------->^             
+             |                                                    |             
+             |   +---------+                         +---------+  |             
+             +-->|Encoder 2|                         |Decoder 2|--+             
+                 +---------+                         +---------+                
+                     |----------------------------------->^                     
+                     |                                    |                     
+                     |   +---------+         +---------+  |                     
+                     +-->|Encoder 3|         |Decoder 3|--+                     
+                         +---------+         +---------+                        
+                             |------------------->^                             
+                             |                    |                             
+                             |      +-------+     |                             
+                             +----->|Bridge |-----+                             
+                                    +-------+                                                                            
 """
-function uchain(;input, output, encoders, decoders, bridge, connector)
+function uchain(;input, output, encoders, decoders, bridge, connection)
     length(encoders) == length(decoders) || println("pouet")
     
     connect(enc::T, prl, dec::T) where {T<:Union{Chain, AbstractArray}} =
@@ -42,11 +71,11 @@ function uchain(;input, output, encoders, decoders, bridge, connector)
     getconn(c) = c
     
     ite = reverse(eachindex(encoders))
-    c = getconn(connector)
+    c = getconn(connection)
     l = SkipConnection(bridge, c)
     for i ∈ ite
         l = connect(encoders[i], l, decoders[i])
-        c = getconn(i, connector)
+        c = getconn(i, connection)
         l = SkipConnection(l, c)
     end
     connect(input, l, output)
