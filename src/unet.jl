@@ -76,7 +76,7 @@ function upadding(is)
     function newsize(is)
         n = is + 2 * tr + 8
         k = ceil(Int, (n - uminsize) / 16)
-        ms + k * 16
+        uminsize + k * 16
     end
     
     pa = (newsize.(is) .- is) ./ 2
