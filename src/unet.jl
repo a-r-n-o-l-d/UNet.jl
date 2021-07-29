@@ -5,7 +5,6 @@ end
 function (cc::CropCat)(x1, x2) # x2 : input
     lo = cc.trms .+ 1
     up = size(x2) .- cc.trms
-    println(size(x1))
     chcat(x2[UnitRange.(lo, up)...], x1)
 end
 
