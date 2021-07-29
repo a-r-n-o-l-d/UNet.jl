@@ -5,6 +5,7 @@ end
 function (cc::CropCat)(x1, x2) # x2 : input
     lo = cc.trms .+ 1
     up = size(x2) .- cc.trms
+    println(size(x1))
     chcat(x2[UnitRange.(lo, up)...], x1)
 end
 
@@ -50,7 +51,7 @@ function unet(; inchannels)
     con = []
     for l ∈ 1:4
         t = utrim(l)
-        push!(con, CropCat((t, t)))
+        push!(con, CropCat((t, t, 0, 0)))
     end
     uchain(encoders = enc, decoders = dec, bridge = b, connection = con)
 end
