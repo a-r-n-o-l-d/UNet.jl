@@ -12,7 +12,8 @@ utrim(i) = (192 - 2^(i + 3)) ÷ 2^i
 """
     unet(; inchannels)
 Build a [U-Net](https://arxiv.org/abs/1505.04597v1) to process images with 
-`inchannels` channels (`inchannels` = 3 for RGB images).
+`inchannels` channels (`inchannels` = 3 for RGB images). This implementation 
+corresponds to original paper with unpadded convolutions.
 """
 function unet(; inchannels)
     function uconv(ch)
@@ -73,12 +74,12 @@ function upadding(is)
     tr = utrim(1)
     
     function newsize(is)
-        n = is + 2 * tr + 4 * nc
+        n = is + 2 * tr + 8
         k = ceil(Int, (n - uminsize) / 16)
         ms + k * 16
     end
     
     pa = (newsize.(is) .- is) ./ 2
     os = (floor.(Int, pa), ceil.(Int, pa))
-    os, ([o .- tr .- 2 * nc for o ∈ os]...,)
+    os, ([o .- tr .- 4 for o ∈ os]...,)
 end
