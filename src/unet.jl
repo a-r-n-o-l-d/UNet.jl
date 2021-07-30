@@ -15,7 +15,7 @@ Build a [U-Net](https://arxiv.org/abs/1505.04597v1) to process images with
 `inchannels` channels (`inchannels` = 3 for RGB images). This implementation 
 corresponds to original paper with unpadded convolutions.
 """
-function unet(; inchannels)
+function unet(; inchannels) # 3D
     function uconv(ch)
         ich, och = ch
         [Conv((3, 3), ich=>och, relu), Conv((3, 3), och=>och, relu)]
