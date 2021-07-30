@@ -9,6 +9,7 @@ function (cc::CropCat)(x1, x2) # x2 : input
 end
 
 utrim(i) = (192 - 2^(i + 3)) ÷ 2^i
+
 """
     unet(; inchannels)
 Build a [U-Net](https://arxiv.org/abs/1505.04597v1) to process images with 
