@@ -1,5 +1,6 @@
-using UNet
 using Test
+using UNet
+using Flux
 using CUDA
 if CUDA.has_cuda_gpu()
     CUDA.allowscalar(false)
