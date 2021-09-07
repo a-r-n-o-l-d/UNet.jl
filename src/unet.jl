@@ -3,7 +3,6 @@ struct CenterCropCat
 end
 
 function CenterCropCat(t, vol)
-    #t = utrim(lvl)
     t = vol ? (t, t, t) : (t, t)
     CenterCropCat((t..., 0, 0))
 end
@@ -14,7 +13,8 @@ function (cc::CenterCropCat)(x1, x2) # x2 : input
     chcat(x2[UnitRange.(lo, up)...], x1)
 end
 
-utrim(l) = (192 - 2^(l + 3)) ÷ 2^l
+#utrim(l) = (192 - 2^(l + 3)) ÷ 2^l
+utrim(l, nlvl) = - (2^(l + 2) - 3 * 2^(nlvl + 1)) ÷ 2^(l - 1)
 
 """
     unet(; inchannels)
@@ -89,7 +89,7 @@ function unet(; inchannels,
         if padding
             pusch!(con, chcat)
         else
-            push!(con, CenterCropCat(utrim(l), volume))
+            push!(con, CenterCropCat(utrim(l, nlevels), volume))
         end
     end
 
@@ -103,7 +103,9 @@ function unet(; inchannels,
     uchain(encoders = enc, decoders = dec, bridge = bdg, connection = con)
 end
 
-const uminsize = 204
+#const uminsize = 204
+
+uminsize(nlvl) = 3 * 2^(nlvl + 2) - 4 + 2^nlvl
 
 #=
 Return a tuple of padding values for both input image and ground truth image.
@@ -118,16 +120,17 @@ pimg = padarray(img, Pad(:reflect, ip...))
 pgth = padarray(gth, Pad(:reflect, op...))
 
 =#
-function upadding(is)
-    tr = utrim(1)
+function upadding(is, nlvl)
+    tr = utrim(1, nlvl)
+    ms = uminsize(nlvl)
     
     function newsize(is)
         n = is + 2 * tr + 8
-        k = ceil(Int, (n - uminsize) / 16)
-        uminsize + k * 16
+        k = ceil(Int, (n - ms) / 16)
+        ms + k * 16
     end
     
     pa = (newsize.(is) .- is) ./ 2
     os = (floor.(Int, pa), ceil.(Int, pa))
-    os, ([o .- tr .- 4 for o ∈ os]...,)
+    os, ([o .- tr .- 4 for o ∈ os]..., )
 end
