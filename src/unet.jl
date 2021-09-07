@@ -16,35 +16,6 @@ end
 
 utrim(l) = (192 - 2^(l + 3)) ÷ 2^l
 
-#=
-function conv2(chs, vol)# vol, outside
-    k = vol ? (3, 3, 3) : (3, 3)
-    conv(chs) = Conv(k, chs, relu)
-    ic, oc = chs
-    conv(ic=>oc), conv(oc=>oc)
-end
-
-function downsample(vol)
-    k = vol ? (2, 2, 2) : (2, 2)
-    MaxPool(k) #k = vol ? (2, 2, 2) : (2, 2)
-end
-
-function upsample(ic, vol)
-    k = vol ? (2, 2, 2) : (2, 2)
-    oc = ic ÷ 2
-    ConvTranspose(k, ic=>oc, stride = 2)
-end
-
-function encblock(chs, lvl, vol)
-    blk = []
-    if lvl > 1
-        push!(blk, downsample(vol))
-    end
-    push!(blk, conv2(chs, vol)...)
-    blk
-end
-=#
-
 """
     unet(; inchannels)
 Build a [U-Net](https://arxiv.org/abs/1505.04597v1) to process images with 
@@ -118,7 +89,7 @@ function unet(; inchannels,
         if padding
             pusch!(con, chcat)
         else
-            push!(con, CenterCropCat(utrim(l), volume)) # Center-crop concatenator
+            push!(con, CenterCropCat(utrim(l), volume))
         end
     end
 
