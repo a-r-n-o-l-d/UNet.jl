@@ -13,9 +13,6 @@ function (cc::CenterCropCat)(x1, x2) # x2 : input
     chcat(x2[UnitRange.(lo, up)...], x1)
 end
 
-#utrim(l) = (192 - 2^(l + 3)) ÷ 2^l
-utrim(l, nlvl) = - (2^(l + 2) - 3 * 2^(nlvl + 1)) ÷ 2^(l - 1)
-
 """
     unet(; inchannels)
 Build a [U-Net](https://arxiv.org/abs/1505.04597v1) to process images with 
@@ -101,36 +98,4 @@ function unet(; inchannels,
     bdg  = [dw, double_conv((ic, mc, oc))..., up]
 
     uchain(encoders = enc, decoders = dec, bridge = bdg, connection = con)
-end
-
-#const uminsize = 204
-
-uminsize(nlvl) = 3 * 2^(nlvl + 2) - 4 + 2^nlvl
-
-#=
-Return a tuple of padding values for both input image and ground truth image.
-is : input size
-d : U-Net depth (default 4, as in original implementation)
-nc : number of unpadded convolution per U-block (default 2, as in original implementation)
-
-using Images, ImageIO
-
-ip, op = upadding((256, 256))
-pimg = padarray(img, Pad(:reflect, ip...))
-pgth = padarray(gth, Pad(:reflect, op...))
-
-=#
-function upadding(is, nlvl)
-    tr = utrim(1, nlvl)
-    ms = uminsize(nlvl)
-    
-    function newsize(is)
-        n = is + 2 * tr + 8
-        k = ceil(Int, (n - ms) / 16)
-        ms + k * 16
-    end
-    
-    pa = (newsize.(is) .- is) ./ 2
-    os = (floor.(Int, pa), ceil.(Int, pa))
-    os, ([o .- tr .- 4 for o ∈ os]..., )
 end
