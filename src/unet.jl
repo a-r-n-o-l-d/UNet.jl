@@ -59,6 +59,7 @@ function unet(; inchannels,
         (ice, mce, oce), (icd, mcd, ocd)
     end
 
+    # Downsampler, Upsampler
     function samplers(c)
         if upsample == :convt
             up =  ConvTranspose(k₂, c => (c ÷ 2), stride = 2)
@@ -71,7 +72,6 @@ function unet(; inchannels,
     enc, dec, con = [], [], []
     for l ∈ 1:nlevels
         ec, dc = level_channels(l)
-
         if l == 1
             push!(enc, [double_conv(ec)...])
             if nclasses > 1

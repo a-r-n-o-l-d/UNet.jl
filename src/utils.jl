@@ -18,6 +18,20 @@ julia> chcat(x1, x2) |> size
 """
 chcat(x...) = cat(x...; dims = (x[1] |> size |> length) - 1)
 
+uconnect(enc::Chain, prl, dec::Chain) = Chain(enc..., prl, dec...)
+    
+uconnect(enc::AbstractArray, prl, dec::AbstractArray) = Chain(enc..., prl, dec...)
+
+uconnect(enc::Chain, prl, dec::AbstractArray) = Chain(enc..., prl, dec...)
+
+uconnect(enc::AbstractArray, prl, dec::Chain) = Chain(enc..., prl, dec...)
+
+uconnect(enc, prl, dec) = Chain(enc, prl, dec)
+
+ubridge(b, c) = SkipConnection(b, c)
+
+ubridge(b::AbstractArray, c) = SkipConnection(Chain(b...), c)
+
 """
     uchain(;encoders, decoders, bridge, connection)
 
@@ -71,27 +85,14 @@ function uchain(;encoders, decoders, bridge, connection)
     else
         connection = repeat([connection], length(encoders))
     end
-    
-    connect(enc::Chain, prl, dec::Chain) = Chain(enc..., prl, dec...) # uconnect  et en-dehors de uchain, ajout Any
-    
-    connect(enc::AbstractArray, prl, dec::AbstractArray) = Chain(enc..., prl, dec...)
-    
-    connect(enc::Chain, prl, dec::AbstractArray) = Chain(enc..., prl, dec...)
-    
-    connect(enc::AbstractArray, prl, dec::Chain) = Chain(enc..., prl, dec...)
-
-    connect(enc, prl, dec) = Chain(enc, prl, dec)
-
-    ubridge(b, c) = SkipConnection(b, c)
-    ubridge(b::AbstractArray, c) = SkipConnection(Chain(b...), c)
 
     ite = zip(reverse(encoders[2:end]),
               reverse(decoders[2:end]), 
               reverse(connection[1:(end - 1)]))
-    l = ubridge(bridge, connection[end]) #SkipConnection(bridge, connection[end])
+    l = ubridge(bridge, connection[end])
     for (e, d, c) ∈ ite
-        l = connect(e, l, d)
+        l = uconnect(e, l, d)
         l = SkipConnection(l, c)
     end
-    connect(encoders[1], l, decoders[1])
+    uconnect(encoders[1], l, decoders[1])
 end
