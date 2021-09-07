@@ -1,18 +1,14 @@
-struct CropCat
+struct CenterCropCat
     trms
 end
 
-function CropCat(t, vol)
+function CenterCropCat(t, vol)
     #t = utrim(lvl)
-    if vol
-        t = (t, t, t)
-    else
-        t = (t, t)
-    end
-    CropCat((t..., 0, 0))
+    t = vol ? (t, t, t) : (t, t)
+    CenterCropCat((t..., 0, 0))
 end
 
-function (cc::CropCat)(x1, x2) # x2 : input
+function (cc::CenterCropCat)(x1, x2) # x2 : input
     lo = cc.trms .+ 1
     up = size(x2) .- cc.trms
     chcat(x2[UnitRange.(lo, up)...], x1)
@@ -20,45 +16,126 @@ end
 
 utrim(l) = (192 - 2^(l + 3)) ÷ 2^l
 
+#=
+function conv2(chs, vol)# vol, outside
+    k = vol ? (3, 3, 3) : (3, 3)
+    conv(chs) = Conv(k, chs, relu)
+    ic, oc = chs
+    conv(ic=>oc), conv(oc=>oc)
+end
+
+function downsample(vol)
+    k = vol ? (2, 2, 2) : (2, 2)
+    MaxPool(k) #k = vol ? (2, 2, 2) : (2, 2)
+end
+
+function upsample(ic, vol)
+    k = vol ? (2, 2, 2) : (2, 2)
+    oc = ic ÷ 2
+    ConvTranspose(k, ic=>oc, stride = 2)
+end
+
+function encblock(chs, lvl, vol)
+    blk = []
+    if lvl > 1
+        push!(blk, downsample(vol))
+    end
+    push!(blk, conv2(chs, vol)...)
+    blk
+end
+=#
+
 """
     unet(; inchannels)
 Build a [U-Net](https://arxiv.org/abs/1505.04597v1) to process images with 
 `inchannels` channels (`inchannels` = 3 for RGB images). This implementation 
 corresponds to original paper with unpadded convolutions.
 """
-function unet(; inchannels, volume = false) # 3D
-    chd = 64
+function unet(; inchannels,
+                nclasses = 1,
+                volume = false,
+                base = 64,
+                batchnorm = false,
+                padding = false,
+                upsample = :convt,
+                nlevels = 4)
+    k₁ = volume ? (1, 1, 1) : (1, 1)
+    k₂ = volume ? (2, 2, 2) : (2, 2)
+    k₃ = volume ? (3, 3, 3) : (3, 3)
+    
+    # Return two convolutional layers
+    function double_conv(c)
+        ic, mc, oc = c
+        p = padding ? 1 : 0
+        cv1(f) = [Conv(k₃, f, pad = p, bias = false), BatchNorm(f[2], relu)]
+        cv2(f) = [Conv(k₃, f, relu, pad = p)]
+        cnv(f) = batchnorm ? cv1(f) : cv2(f)
+        [cnv(ic => mc)..., cnv(mc => oc)...]
+    end
+    
+    # Compute encoder/decoder number of channels for a given level (lvl)
+    function level_channels(lvl)
+        # encoder channels: input, middle, ouptput
+        ice = (lvl == 1) ? inchannels : 2^(lvl - 2) * base
+        mce = oce = 2^(lvl - 1) * base
+        # decoder channels: input, middle, ouptput
+        icd, mcd = 2 * oce, oce
+        if upsample == :convt
+            ocd = mcd
+        else
+            ocd = (lvl == 1) ? mcd : mcd ÷ 2
+        end
+        (ice, mce, oce), (icd, mcd, ocd)
+    end
+
+    function samplers(c)
+        if upsample == :convt
+            up =  ConvTranspose(k₂, c => (c ÷ 2), stride = 2)
+        else
+            up = Upsample(upsample, scale = k₂)
+        end
+        MaxPool(k₂), up
+    end
+
+    enc, dec, con = [], [], []
+    for l ∈ 1:nlevels
+        ec, dc = level_channels(l)
+
+        if l == 1
+            push!(enc, [double_conv(ec)...])
+            if nclasses > 1
+                d = volume ? 4 : 3
+                cl = [Conv(k₁, dc[3] => nclasses), x -> softmax(x, dims = d)]
+            else
+                cl = [Conv(k₁, dc[3] => nclasses, sigmoid)]
+            end
+            push!(dec, [double_conv(dc)..., cl...])
+        else
+            dw, up = samplers(dc[3])
+            push!(enc, [dw, double_conv(ec)...])
+            push!(dec, [double_conv(dc)..., up])
+        end
+        if padding
+            pusch!(con, chcat)
+        else
+            push!(con, CenterCropCat(utrim(l), volume)) # Center-crop concatenator
+        end
+    end
+
+    # bridge
+    ec, dc = level_channels(nlevels + 1)
+    ic, mc, _ = ec
+    _, _, oc = dc
+    dw, up = samplers(oc)
+    bdg  = [dw, double_conv((ic, mc, oc))..., up]
+
+    uchain(encoders = enc, decoders = dec, bridge = bdg, connection = con)
+#=    chd = 64
     chu = 2 * chd
     kc, kd, ku, kr = (3, 3), (2, 2), (2, 2), (1, 1) #outside
     if volume
         kc = (kc..., 3)
 
-    end
-
-    conv(chs) = Conv(kc, chs, relu)
-
-    function conv2(chs)# vol, outside
-        #k = vol ? (3, 3, 3) : (3, 3)
-        #conv(chs) = Conv(k, chs, relu)
-        ic, oc = chs
-        conv(ic=>oc), conv(oc=>oc)
-    end
-
-    downsample() = MaxPool(kd) #k = vol ? (2, 2, 2) : (2, 2)
-
-    function upsample(ic)#vol, outside
-        #k = vol ? (2, 2, 2) : (2, 2)
-        oc = ic ÷ 2
-        ConvTranspose(k, ic=>oc, stride = k)
-    end
-
-    function encblock(chs, lvl)
-        blk = []
-        if lvl > 1
-            push!(blk, downsample())
-        end
-        push!(blk, conv2(chs)...)
-        blk
     end
 
     function decblock(chs, lvl)
@@ -90,7 +167,7 @@ function unet(; inchannels, volume = false) # 3D
     bdg = Chain(downsample(), conv2(oce=>icd)..., upsample(icd)) # bridge
 
     uchain(encoders = enc, decoders = dec, bridge = bdg, connection = con)
-
+=#
  #=   function uconv(ch)
         ich, och = ch
         [Conv((3, 3), ich=>och, relu), Conv((3, 3), och=>och, relu)]

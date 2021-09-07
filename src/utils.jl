@@ -82,10 +82,13 @@ function uchain(;encoders, decoders, bridge, connection)
 
     connect(enc, prl, dec) = Chain(enc, prl, dec)
 
+    ubridge(b, c) = SkipConnection(b, c)
+    ubridge(b::AbstractArray, c) = SkipConnection(Chain(b...), c)
+
     ite = zip(reverse(encoders[2:end]),
               reverse(decoders[2:end]), 
               reverse(connection[1:(end - 1)]))
-    l = SkipConnection(bridge, connection[end])
+    l = ubridge(bridge, connection[end]) #SkipConnection(bridge, connection[end])
     for (e, d, c) ∈ ite
         l = connect(e, l, d)
         l = SkipConnection(l, c)
