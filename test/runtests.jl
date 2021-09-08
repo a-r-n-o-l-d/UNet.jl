@@ -11,7 +11,7 @@ end
 =#
 
 # Generate a fake batch of two images and return it with the expected ouput size.
-function fake_data(;inchannels, nclasses, volume, nlevels = 1)
+function fake_data(;inchannels, nclasses = 1, volume = false, nlevels = 1)
     is = volume ? (4, 4, 4) : (4, 4)              # image size
     ip, op = upadding(is, nlevels)                # image padding
     inp = ((@. is + 2 * ip[1])..., inchannels, 2) # input batch size
@@ -20,11 +20,9 @@ function fake_data(;inchannels, nclasses, volume, nlevels = 1)
 end
 
 @testset "UNet.jl" begin
-    # Define fake data
-
-
     # Test a small UNet
     model = unet(inchannels = 3, nlevels = 1)
+    x, oup = fake_data(inchannels = 3)
     @test (model(x) |> size) == oup
 
 
