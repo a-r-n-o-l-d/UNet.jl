@@ -99,7 +99,8 @@ end
 
 utrim(l, nlvl) = - (2^(l + 2) - 3 * 2^(nlvl + 1)) ÷ 2^(l - 1)
 
-uminsize(nlvl) = 13 * 2^nlvl - 4
+#uminsize(nlvl) = 13 * 2^nlvl - 4
+uminsize(; padding, nlevels) = padding ? 4 * 2^nlevels : 3 * 2^(nlevels + 2) - 4
 
 #=
 Return a tuple of padding values for both input image and ground truth image.
@@ -129,9 +130,9 @@ function upadding(is, nlvl)
     os, ([o .- tr .- 4 for o ∈ os]..., )
 end
 =#
-function upadding(sz, nlvl)
-    tr = utrim(1, nlvl)
-    ms = uminsize(nlvl)
+function upadding(sz; padding, nlevels)
+    tr = utrim(1, nlevels)
+    ms = uminsize(padding = padding, nlevels = nlevels)
 
     n = @. sz + 2 * tr + 2 * 4 # trimming + 4 unpadded convolutions
     ns = @. ms + ceil(Int, (n - ms) / 16) * 16
