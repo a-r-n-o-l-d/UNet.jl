@@ -86,7 +86,7 @@ function unet(; inchannels,
         if padding
             pusch!(con, chcat)
         else
-            push!(con, CenterCropCat(utrim(l, nlevels), volume))
+            push!(con, CenterCropCat(trim(l, nlevels), volume))
         end
     end
 

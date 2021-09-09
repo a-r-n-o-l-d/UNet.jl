@@ -18,89 +18,83 @@ julia> chcat(x1, x2) |> size
 """
 chcat(x...) = cat(x...; dims = (x[1] |> size |> length) - 1)
 
-uconnect(enc::Chain, prl, dec::Chain) = Chain(enc..., prl, dec...)
-
-uconnect(enc::AbstractArray, prl, dec::AbstractArray) = Chain(enc..., prl, dec...)
-
-uconnect(enc::Chain, prl, dec::AbstractArray) = Chain(enc..., prl, dec...)
-
-uconnect(enc::AbstractArray, prl, dec::Chain) = Chain(enc..., prl, dec...)
-
-uconnect(enc, prl, dec) = Chain(enc, prl, dec)
-
-ubridge(b, c) = SkipConnection(b, c)
-
-ubridge(b::AbstractArray, c) = SkipConnection(Chain(b...), c)
-
-"""
-    uchain(;encoders, decoders, bridge, connection)
-
-Build a `Chain` with U-Net like architecture. `encoders` and `decoders` are 
-arrays of encoding/decoding blocks, from top to bottom (see diagram below). 
-`bridge` is the bottom part of U-Net  architecture.
-Each level of the U-Net is connected through a 2-argument callable `connection`.
-`connection` could be an array in case the way levels are connected vary from 
-one level to another.
-
-Notes :
-- usually encoder block starts with a 'MaxPool' to downsample image by 2, except
-the first level encoder.
-- usually decoder block ends with a 'ConvTranspose' to upsample image by 2,
-except the first level decoder.
-
-```
-+---------+                                                          +---------+
-|encoder 1|                                                          |decoder 1|
-+---------+                                                          +---------+
-     |------------------------------------------------------------------->^     
-     |                                                                    |     
-     |   +---------+                                         +---------+  |     
-     +-->|encoder 2|                                         |decoder 2|--+     
-         +---------+                                         +---------+        
-              |-------------------------------------------------->^             
-              |                                                   |             
-              |   +---------+                        +---------+  |             
-              +-->|encoder 3|                        |decoder 3|--+             
-                  +---------+                        +---------+                
-                       |--------------------------------->^                     
-                       |                                  |                     
-                       |   +---------+       +---------+  |                     
-                       +-->|encoder 4|       |decoder 4|--+                     
-                           +---------+       +---------+                        
-                                |---------------->^                             
-                                |                 |                             
-                                |    +--------+   |                             
-                                +--->| bridge |---+                             
-                                     +--------+                                  
-```
-See also [`chcat`](@ref).
-"""
-function uchain(;encoders, decoders, bridge, connection)
-    length(encoders) == length(decoders) || throw(ArgumentError(
-        "The number of encoders should be equal to the number of decoders."))
-
-    if isa(connection, AbstractArray)
-        length(encoders) == length(connection) || throw(ArgumentError(
-            "The number of connections should be equal to the number of encoders/decoders."))
-    else
-        connection = repeat([connection], length(encoders))
+function checksize(sz::Int; padding, nlevels) # mod(sz, 2^nlevels) == 0
+    # number of trimmed pixels due to convolutions
+    pl = padding ? 0 : 4
+    chk = true
+    sz -= pl
+    for l ∈ 1:nlevels
+        if iseven(sz)
+            sz ÷= 2  # MaxPool
+            sz -= pl # pixel trimming
+        else
+            chk = false
+            break
+        end
     end
-
-    ite = zip(reverse(encoders[2:end]),
-              reverse(decoders[2:end]), 
-              reverse(connection[1:(end - 1)]))
-    l = ubridge(bridge, connection[end])
-    for (e, d, c) ∈ ite
-        l = uconnect(e, l, d)
-        l = SkipConnection(l, c)
-    end
-    uconnect(encoders[1], l, decoders[1])
+    chk
 end
 
-utrim(l, nlvl) = - (2^(l + 2) - 3 * 2^(nlvl + 1)) ÷ 2^(l - 1)
+checksize(sz::Tuple; kwargs...) = @. checksize(sz; kwargs...)
+
+minsize(; padding, nlevels) = padding ? 4 * 2^nlevels : 3 * 2^(nlevels + 2) - 4
+
+trim(l, nlvl) = -(2^(l + 2) - 3 * 2^(nlvl + 1)) ÷ 2^(l - 1)
+
+function outputsize(sz; padding, nlevels)
+    if padding
+        os = sz
+    else
+        tr = trim(1, nlevels)
+        os = @. sz - 2 * tr - 8
+    end
+    os
+end
+
+function adjustsize(sz::Int; padding, nlevels)
+    # Number of trimmed pixels if unpadded convolutions
+    trm = padding ? 0 : (2 * trim(1, nlevels) + 8)
+    sz += trm
+    # Minimal size required for UNet
+    smin =  minsize(padding = padding, nlevels = nlevels)
+    if sz < smin
+        ns = smin
+    else
+        # Ensure that each entry in MaxPool is even
+        stp = 2^nlevels
+        k = ceil(Int, (sz - smin) / stp)
+        ns = smin + k * stp
+    end
+    ns
+end
+
+adjustsize(sz::Int, p, n) = adjustsize(sz, padding = p, nlevels = n)
+
+adjustsize(sz::Tuple, p, n) = adjustsize(sz, padding = p, nlevels = n)
+
+adjustsize(sz::Tuple; kwargs...) = @. adjustsize(sz; kwargs...)
+
+function padding(sz; padding, nlevels)
+    ns = adjustsize(sz, padding, nlevels)
+    pa = @. (ns - sz) / 2
+    # lower edge padding for input
+    ilo = floor.(Int, pa)
+    # upper edge padding for input
+    ihi = ceil.(Int, pa)
+    # Compute output size
+    os = padding ? ns : (@. ns - 2 * trim(1, nlevels) - 8)
+    pa = @. (os - sz) / 2
+    # lower edge padding for ground truth
+    glo = floor.(Int, pa)
+    # upper edge padding for ground truth
+    ghi = ceil.(Int, pa)
+    (ilo, ihi), (glo, ghi)
+end
+
+#utrim(l, nlvl) = - (2^(l + 2) - 3 * 2^(nlvl + 1)) ÷ 2^(l - 1)
 
 #uminsize(nlvl) = 13 * 2^nlvl - 4
-uminsize(; padding, nlevels) = padding ? 4 * 2^nlevels : 3 * 2^(nlevels + 2) - 4
+#uminsize(; padding, nlevels) = padding ? 4 * 2^nlevels : 3 * 2^(nlevels + 2) - 4
 
 #=
 Return a tuple of padding values for both input image and ground truth image.
@@ -129,13 +123,13 @@ function upadding(is, nlvl)
     os = (floor.(Int, pa), ceil.(Int, pa))
     os, ([o .- tr .- 4 for o ∈ os]..., )
 end
-=#
+
 function upadding(sz; padding, nlevels)
     tr = utrim(1, nlevels)
     ms = uminsize(padding = padding, nlevels = nlevels)
 
     n = @. sz + 2 * tr + 2 * 4 # trimming + 4 unpadded convolutions
-    ns = @. ms + ceil(Int, (n - ms) / 16) * 16
+    ns = @. ms + ceil(Int, (n - ms) / 16) * 16 # step = 2^nlevels
     for i ∈ eachindex(ns)
         if ns[i] < ms
             ns[i] = ms
@@ -149,3 +143,4 @@ function upadding(sz; padding, nlevels)
     ghi = @. ihi - tr - 4  # upper edge padding for ground truth
     (ilo, ihi), (glo, ghi)
 end
+=#
