@@ -28,16 +28,16 @@ function dummy_data(;inchannels,
 end
 
 @testset "UNet.jl" begin
-    
+
     for ic ∈ [1 3], nc ∈ [1 5], vl ∈ [true false], bn ∈ [true false], 
         pg ∈ [true false], up ∈ [:convt :nearest :bilinear]
         if vl == true && up == :bilinear
             continue
         end
         model = unet(inchannels = ic, nclasses = nc, volume = vl, base = 4,
-            batchnorm = bn, padding = pg, upsample = up, nlevels = 1)
+            batchnorm = bn, padding = pg, upsample = up, nlevels = 2)
         x, oup = dummy_data(inchannels = ic, nclasses = nc, volume = vl,
-            padding = pg, nlevels = 1)
+            padding = pg, nlevels = 2)
         @test (model(x) |> size) == oup
     end
 
