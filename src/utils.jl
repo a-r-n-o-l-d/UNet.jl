@@ -39,6 +39,8 @@ checksize(sz::Tuple; kwargs...) = @. checksize(sz; kwargs...)
 
 minsize(; padding, nlevels) = padding ? 4 * 2^nlevels : 3 * 2^(nlevels + 2) - 4
 
+minsize(p, n) = minsize(padding = p, nlevels = n)
+
 trim(l, nlvl) = -(2^(l + 2) - 3 * 2^(nlvl + 1)) ÷ 2^(l - 1)
 
 function outputsize(sz; padding, nlevels)
@@ -51,12 +53,14 @@ function outputsize(sz; padding, nlevels)
     os
 end
 
+outputsize(sz, p, n) = outputsize(sz; padding = p, nlevels = n)
+
 function adjustsize(sz::Int; padding, nlevels)
     # Number of trimmed pixels if unpadded convolutions
     trm = padding ? 0 : (2 * trim(1, nlevels) + 8)
     sz += trm
     # Minimal size required for UNet
-    smin =  minsize(padding = padding, nlevels = nlevels)
+    smin =  minsize(padding, nlevels)
     if sz < smin
         ns = smin
     else
