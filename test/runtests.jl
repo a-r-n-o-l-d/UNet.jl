@@ -1,4 +1,5 @@
 using Test
+using Flux
 using UNet
 #=using Flux # trop long à virer
 using CUDA # trop long à virer
@@ -27,19 +28,20 @@ function dummy_data(;inchannels,
     rand(Float32, (is..., inchannels, 2)), (os..., nclasses, 2)
 end
 
-@testset "UNet.jl" begin
+include("unet.jl")
 
-    for ic ∈ [1 3], nc ∈ [1 5], vl ∈ [true false], bn ∈ [true false], 
-        pg ∈ [true false], up ∈ [:convt :nearest :bilinear]
-        if vl == true && up == :bilinear
-            continue
-        end
-        model = unet(inchannels = ic, nclasses = nc, volume = vl, base = 4,
-            batchnorm = bn, padding = pg, upsample = up, nlevels = 2)
-        x, oup = dummy_data(inchannels = ic, nclasses = nc, volume = vl,
-            padding = pg, nlevels = 2)
-        @test (model(x) |> size) == oup
+@testset "UNet.jl" begin
+    cv = Conv((3, 3), 4=>4)
+    a = Chain(cv, cv)
+    b = [cv cv]
+    encs = [[a a] [b b]]
+    for enc ∈ [a b], dec ∈ [a b], bdg ∈ [a b]
+        #println("enc")
+        #println(enc)
+        uchain(encoders = enc, decoders = dec, bridge = bdg, connection = chcat)
     end
+
+
 
     #=a = rand(392, 392, 64, 1)
     b = rand(568, 568, 64, 1)
