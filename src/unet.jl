@@ -14,10 +14,21 @@ function (cc::CenterCropCat)(x1, x2) # x2 : input
 end
 
 """
-    unet(; inchannels)
+    unet(; inchannels, nclasses = 1, volume = false, base = 64,
+    batchnorm = false, padding = false, upsample = :convt, nlevels = 4)
 Build a [U-Net](https://arxiv.org/abs/1505.04597v1) to process images with 
-`inchannels` channels (`inchannels` = 3 for RGB images). This implementation 
-corresponds to original paper with unpadded convolutions.
+`inchannels` channels (e.g. `inchannels` = 3 for RGB images). Default argument
+values corresponds to original paper with unpadded convolutions.
+
+- nclasses: number of pixel classes
+- volume: set to `true` to process tri-dimentional datas
+- base: base number of convolution filters, the number of filters/channels is
+multiplied by two at each U-Net level
+- batchnorm: if `true` add a `BatchNorm` layer after each convolution
+- padding: if `true` convolutions are padded
+- upsample: either `:convt` (`ConvTranspose` layer), `:nearest` or `:bilinear`
+(`Upsample layer`)
+- nlevels: number of level or depth of the U-Net
 """
 function unet(; inchannels,
                 nclasses = 1,
