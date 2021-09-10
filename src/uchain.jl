@@ -83,33 +83,6 @@ for T2 ∈ [:Chain :AbstractArray]
     end
 end
 
-#=connect(enc::Chain, prl, dec::Chain) = Chain(enc..., prl, dec...)
-
-uconnect(enc::AbstractArray, prl, dec::AbstractArray) = Chain(enc..., prl, dec...)
-
-uconnect(enc::Chain, prl, dec::AbstractArray) = Chain(enc..., prl, dec...)
-
-uconnect(enc::AbstractArray, prl, dec::Chain) = Chain(enc..., prl, dec...)
-
-
-uconnect(enc::Chain, prl, dec) = Chain(enc..., prl, dec)
-
-uconnect(enc::AbstractArray, prl, dec) = Chain(enc..., prl, dec)
-
-uconnect(enc::Chain, prl, dec) = Chain(enc..., prl, dec)
-
-
-
-uconnect(enc, prl, dec::Chain) = Chain(enc, prl, dec...)
-
-uconnect(enc, prl, dec::AbstractArray) = Chain(enc, prl, dec...)
-
-uconnect(enc, prl, dec::Chain) = Chain(enc, prl, dec...)
-
-
-uconnect(enc, prl, dec) = Chain(enc, prl, dec)
-=#
-
 @inline ubridge(b, c) = SkipConnection(b, c)
 
 @inline ubridge(b::AbstractArray, c) = SkipConnection(Chain(b...), c)
