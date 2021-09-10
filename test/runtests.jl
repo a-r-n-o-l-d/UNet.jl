@@ -29,18 +29,9 @@ function dummy_data(;inchannels,
 end
 
 include("unet.jl")
+include("uchain.jl")
 
 @testset "UNet.jl" begin
-    cv = Conv((3, 3), 4=>4)
-    a = Chain(cv, cv)
-    b = [cv cv]
-    encs = [[a a] [b b]]
-    for enc ∈ [a b], dec ∈ [a b], bdg ∈ [a b]
-        #println("enc")
-        #println(enc)
-        uchain(encoders = enc, decoders = dec, bridge = bdg, connection = chcat)
-    end
-
 
 
     #=a = rand(392, 392, 64, 1)

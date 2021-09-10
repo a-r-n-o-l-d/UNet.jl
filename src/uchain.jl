@@ -63,7 +63,27 @@ function uchain(;encoders, decoders, bridge, connection)
     uconnect(encoders[1], l, decoders[1])
 end
 
-uconnect(enc::Chain, prl, dec::Chain) = Chain(enc..., prl, dec...)
+@inline uconnect(enc, prl, dec) = Chain(enc, prl, dec)
+
+for T1 ∈ [:Chain :AbstractArray], T2 ∈ [:Chain :AbstractArray]
+    @eval begin
+        @inline uconnect(enc::($T1), prl, dec::($T2)) = Chain(enc..., prl, dec...)
+    end
+end
+
+for T1 ∈ [:Chain :AbstractArray]
+    @eval begin
+        @inline uconnect(enc::($T1), prl, dec) = Chain(enc..., prl, dec)
+    end
+end
+
+for T2 ∈ [:Chain :AbstractArray]
+    @eval begin
+        @inline uconnect(enc, prl, dec::($T2)) = Chain(enc, prl, dec...)
+    end
+end
+
+#=connect(enc::Chain, prl, dec::Chain) = Chain(enc..., prl, dec...)
 
 uconnect(enc::AbstractArray, prl, dec::AbstractArray) = Chain(enc..., prl, dec...)
 
@@ -71,8 +91,25 @@ uconnect(enc::Chain, prl, dec::AbstractArray) = Chain(enc..., prl, dec...)
 
 uconnect(enc::AbstractArray, prl, dec::Chain) = Chain(enc..., prl, dec...)
 
+
+uconnect(enc::Chain, prl, dec) = Chain(enc..., prl, dec)
+
+uconnect(enc::AbstractArray, prl, dec) = Chain(enc..., prl, dec)
+
+uconnect(enc::Chain, prl, dec) = Chain(enc..., prl, dec)
+
+
+
+uconnect(enc, prl, dec::Chain) = Chain(enc, prl, dec...)
+
+uconnect(enc, prl, dec::AbstractArray) = Chain(enc, prl, dec...)
+
+uconnect(enc, prl, dec::Chain) = Chain(enc, prl, dec...)
+
+
 uconnect(enc, prl, dec) = Chain(enc, prl, dec)
+=#
 
-ubridge(b, c) = SkipConnection(b, c)
+@inline ubridge(b, c) = SkipConnection(b, c)
 
-ubridge(b::AbstractArray, c) = SkipConnection(Chain(b...), c)
+@inline ubridge(b::AbstractArray, c) = SkipConnection(Chain(b...), c)
