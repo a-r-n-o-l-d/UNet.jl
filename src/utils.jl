@@ -78,6 +78,17 @@ adjustsize(sz::Tuple, p, n) = adjustsize(sz, padding = p, nlevels = n)
 
 adjustsize(sz::Tuple; kwargs...) = @. adjustsize(sz; kwargs...)
 
+#=Return a tuple of padding values for both input image and ground truth image.
+    is : input size
+    d : U-Net depth (default 4, as in original implementation)
+    nc : number of unpadded convolution per U-block (default 2, as in original implementation)
+    
+    using Images, ImageIO
+    
+    ip, op = upadding((256, 256))
+    pimg = padarray(img, Pad(:reflect, ip...))
+    pgth = padarray(gth, Pad(:reflect, op...))
+    =#
 function padding(sz; padding, nlevels)
     ns = adjustsize(sz, padding, nlevels)
     pa = @. (ns - sz) / 2
@@ -94,57 +105,3 @@ function padding(sz; padding, nlevels)
     ghi = ceil.(Int, pa)
     (ilo, ihi), (glo, ghi)
 end
-
-#utrim(l, nlvl) = - (2^(l + 2) - 3 * 2^(nlvl + 1)) ÷ 2^(l - 1)
-
-#uminsize(nlvl) = 13 * 2^nlvl - 4
-#uminsize(; padding, nlevels) = padding ? 4 * 2^nlevels : 3 * 2^(nlevels + 2) - 4
-
-#=
-Return a tuple of padding values for both input image and ground truth image.
-is : input size
-d : U-Net depth (default 4, as in original implementation)
-nc : number of unpadded convolution per U-block (default 2, as in original implementation)
-
-using Images, ImageIO
-
-ip, op = upadding((256, 256))
-pimg = padarray(img, Pad(:reflect, ip...))
-pgth = padarray(gth, Pad(:reflect, op...))
-BUG si is est trop petit
-
-function upadding(is, nlvl)
-    tr = utrim(1, nlvl)
-    ms = uminsize(nlvl)
-    
-    function newsize(is)
-        n = is + 2 * tr + 8
-        k = ceil(Int, (n - ms) / 16)
-        ms + k * 16
-    end
-    
-    pa = (newsize.(is) .- is) ./ 2
-    os = (floor.(Int, pa), ceil.(Int, pa))
-    os, ([o .- tr .- 4 for o ∈ os]..., )
-end
-
-function upadding(sz; padding, nlevels)
-    tr = utrim(1, nlevels)
-    ms = uminsize(padding = padding, nlevels = nlevels)
-
-    n = @. sz + 2 * tr + 2 * 4 # trimming + 4 unpadded convolutions
-    ns = @. ms + ceil(Int, (n - ms) / 16) * 16 # step = 2^nlevels
-    for i ∈ eachindex(ns)
-        if ns[i] < ms
-            ns[i] = ms
-        end
-    end
-    
-    pa = @. (ns - sz) / 2
-    ilo = floor.(Int, pa)  # lower edge padding for input
-    ihi = ceil.(Int, pa)   # upper edge padding for input
-    glo = @. ilo - tr - 4  # lower edge padding for ground truth
-    ghi = @. ihi - tr - 4  # upper edge padding for ground truth
-    (ilo, ihi), (glo, ghi)
-end
-=#

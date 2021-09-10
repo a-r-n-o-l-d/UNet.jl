@@ -49,6 +49,50 @@ function uchain(;encoders, decoders, bridge, connection)
         length(encoders) == length(connection) || throw(ArgumentError(
             "The number of connections should be equal to the number of encoders/decoders."))
     else
+        #utrim(l, nlvl) = - (2^(l + 2) - 3 * 2^(nlvl + 1)) ÷ 2^(l - 1)
+        
+        #uminsize(nlvl) = 13 * 2^nlvl - 4
+        #uminsize(; padding, nlevels) = padding ? 4 * 2^nlevels : 3 * 2^(nlevels + 2) - 4
+        
+        #=
+        
+        BUG si is est trop petit
+        
+        function upadding(is, nlvl)
+            tr = utrim(1, nlvl)
+            ms = uminsize(nlvl)
+            
+            function newsize(is)
+                n = is + 2 * tr + 8
+                k = ceil(Int, (n - ms) / 16)
+                ms + k * 16
+            end
+            
+            pa = (newsize.(is) .- is) ./ 2
+            os = (floor.(Int, pa), ceil.(Int, pa))
+            os, ([o .- tr .- 4 for o ∈ os]..., )
+        end
+        
+        function upadding(sz; padding, nlevels)
+            tr = utrim(1, nlevels)
+            ms = uminsize(padding = padding, nlevels = nlevels)
+        
+            n = @. sz + 2 * tr + 2 * 4 # trimming + 4 unpadded convolutions
+            ns = @. ms + ceil(Int, (n - ms) / 16) * 16 # step = 2^nlevels
+            for i ∈ eachindex(ns)
+                if ns[i] < ms
+                    ns[i] = ms
+                end
+            end
+            
+            pa = @. (ns - sz) / 2
+            ilo = floor.(Int, pa)  # lower edge padding for input
+            ihi = ceil.(Int, pa)   # upper edge padding for input
+            glo = @. ilo - tr - 4  # lower edge padding for ground truth
+            ghi = @. ihi - tr - 4  # upper edge padding for ground truth
+            (ilo, ihi), (glo, ghi)
+        end
+        =#
         connection = repeat([connection], length(encoders))
     end
 
@@ -71,15 +115,10 @@ for T1 ∈ [:Chain :AbstractArray], T2 ∈ [:Chain :AbstractArray]
     end
 end
 
-for T1 ∈ [:Chain :AbstractArray]
+for T ∈ [:Chain :AbstractArray]
     @eval begin
-        @inline uconnect(enc::($T1), prl, dec) = Chain(enc..., prl, dec)
-    end
-end
-
-for T2 ∈ [:Chain :AbstractArray]
-    @eval begin
-        @inline uconnect(enc, prl, dec::($T2)) = Chain(enc, prl, dec...)
+        @inline uconnect(enc::($T), prl, dec) = Chain(enc..., prl, dec)
+        @inline uconnect(enc, prl, dec::($T)) = Chain(enc, prl, dec...)
     end
 end
 
