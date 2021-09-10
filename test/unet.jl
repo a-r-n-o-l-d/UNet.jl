@@ -1,13 +1,15 @@
+using UNet: minsize, outputsize
+
 # Generate a fake batch of two images and return it with the expected ouput size.
 function dummy_data(;inchannels,
     nclasses = 1,
     volume = false,
     padding = false,
     nlevels = 1)
-sz = UNet.minsize(padding, nlevels)
-is = volume ? (sz, sz, sz) : (sz, sz)
-os = UNet.outputsize(is, padding, nlevels)
-rand(Float32, (is..., inchannels, 2)), (os..., nclasses, 2)
+    sz = minsize(padding, nlevels)
+    is = volume ? (sz, sz, sz) : (sz, sz)
+    os = UNet.outputsize(is, padding, nlevels)
+    rand(Float32, (is..., inchannels, 2)), (os..., nclasses, 2)
 end
 
 @testset "unet" begin
