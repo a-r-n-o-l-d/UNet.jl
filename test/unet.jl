@@ -28,5 +28,4 @@ end
             padding = pg, nlevels = 2)
         @test (model(x) |> size) == ys
     end
-
 end

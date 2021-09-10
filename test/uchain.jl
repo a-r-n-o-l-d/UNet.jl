@@ -32,6 +32,7 @@ end
 
 (b::Bridge)(x) = x |> b.dspl |> b.conv |> b.uspl
 
+# Encoder builders
 function encoder(lvl)
     enc = []
     if lvl == 1
@@ -55,7 +56,7 @@ encoder(t::Val{:struct}, lvl) = begin
     Encoder(enc[1], Chain(enc[2], enc[3]))
 end
 
-
+# Decoder builders
 function decoder(lvl)
     dec = Any[Conv((3, 3), 2=>1, pad = 1), Conv((3, 3), 1=>1, pad = 1)]
     if lvl == 1
@@ -77,6 +78,7 @@ decoder(t::Val{:struct}, lvl) = begin
     Decoder(Chain(dec[1], dec[2]), dec[3])
 end
 
+# Bridge builders
 bridge() = [MaxPool((2, 2)),
             Conv((3, 3), 1=>1, pad = 1), Conv((3, 3), 1=>1, pad = 1),
             Upsample(:bilinear, scale = 2)]
