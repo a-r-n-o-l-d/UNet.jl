@@ -18,8 +18,7 @@ end
         pg ∈ [true false],
         up ∈ [:convt :nearest :bilinear]
 
-        if vl == true && up == :bilinear
-            #@test_throws
+        if vl && up == :bilinear
             continue
         end
         model = unet(inchannels = ic, nclasses = nc, volume = vl, base = 4,
@@ -28,4 +27,7 @@ end
             padding = pg, nlevels = 2)
         @test (model(x) |> size) == ys
     end
+
+    @test_throws ArgumentError unet(inchannels = 3, volume = true,
+                                    upsample = :bilinear)
 end

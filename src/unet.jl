@@ -27,6 +27,10 @@ function unet(; inchannels,
                 padding = false,
                 upsample = :convt,
                 nlevels = 4)
+    if volume && upsample == :bilinear
+        throw(ArgumentError(
+            "Bilinear upsampling can not be used with tri-dimensionnal datas."))
+    end
     k₁ = volume ? (1, 1, 1) : (1, 1)
     k₂ = volume ? (2, 2, 2) : (2, 2)
     k₃ = volume ? (3, 3, 3) : (3, 3)
