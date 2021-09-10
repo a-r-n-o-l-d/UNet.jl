@@ -11,7 +11,6 @@ rand(Float32, (is..., inchannels, 2)), (os..., nclasses, 2)
 end
 
 @testset "unet" begin
-
     for ic ∈ [1 3],
         nc ∈ [1 5],
         vl ∈ [true false],
