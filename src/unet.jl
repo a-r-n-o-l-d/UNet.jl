@@ -18,10 +18,10 @@ end
     batchnorm = false, padding = false, upsample = :convt, nlevels = 4)
 Build a [U-Net](https://arxiv.org/abs/1505.04597v1) to process images with 
 `inchannels` channels (e.g. `inchannels` = 3 for RGB images). Default argument
-values corresponds to original paper with unpadded convolutions.
+values correspond to the original paper with unpadded convolutions.
 
 - nclasses: number of pixel classes
-- volume: set to `true` to process tri-dimentional datas
+- volume: set to `true` to process tri-dimensional datas
 - base: base number of convolution filters, the number of filters/channels is
 multiplied by two at each U-Net level
 - batchnorm: if `true` add a `BatchNorm` layer after each convolution
