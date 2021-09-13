@@ -8,3 +8,6 @@
 [U-Net](https://arxiv.org/abs/1505.04597v1) implementation for image 
 segmentation in Julia build on top of the [Flux](http://fluxml.github.io/) 
 library.
+
+The architecture is fully configurable, see the 
+[documentation](https://a-r-n-o-l-d.github.io/UNet.jl/dev/#UNet.unet-Tuple{}).
