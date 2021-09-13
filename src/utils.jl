@@ -108,7 +108,7 @@ Computes two tuples of padding values for both input image and ground truth imag
 - `nlevels`: number of levels in U-Net architecture
 
 # Example
-```jldoctest
+```julia
 julia> using Images
 
 julia> using UNet: padding
