@@ -20,8 +20,8 @@ chcat(x...) = cat(x...; dims = (x[1] |> size |> length) - 1)
 
 """
     checksize(sz; padding, nlevels)
-Check if image size is appropriate with a given U-Net architecture. sz could be 
-an `Int` or a `Tuple` of `Int`.
+Check if an image size is appropriate with a given U-Net architecture. sz could
+be either an `Int` or a `Tuple` of `Int`.
 """
 function checksize(sz::Int; padding, nlevels) # mod(sz, 2^nlevels) == 0
     # number of trimmed pixels due to convolutions
@@ -42,12 +42,24 @@ end
 
 checksize(sz::Tuple; kwargs...) = @. checksize(sz; kwargs...)
 
+"""
+    minsize(; padding, nlevels)
+    minsize(p, n)
+Computes the minimal image size for a given U-Net architecture defined by
+`padding` and `nlevels`.
+"""
 minsize(; padding, nlevels) = padding ? 4 * 2^nlevels : 3 * 2^(nlevels + 2) - 4
 
 minsize(p, n) = minsize(padding = p, nlevels = n)
 
+# Internal use
 trim(l, nlvl) = -(2^(l + 2) - 3 * 2^(nlvl + 1)) ÷ 2^(l - 1)
 
+"""
+    outputsize(sz; padding, nlevels)
+Computes output size for a given U-Net architecture defined by
+`padding` and `nlevels`.
+"""
 function outputsize(sz; padding, nlevels)
     if padding
         os = sz
@@ -60,6 +72,10 @@ end
 
 outputsize(sz, p, n) = outputsize(sz; padding = p, nlevels = n)
 
+"""
+    adjustsize(sz; padding, nlevels)
+
+"""
 function adjustsize(sz::Int; padding, nlevels)
     # Number of trimmed pixels if unpadded convolutions
     trm = padding ? 0 : (2 * trim(1, nlevels) + 8)
