@@ -116,7 +116,7 @@ Return a tuple of padding values for both input image and ground truth image.
     padding(sz; padding, nlevels)
 Computes two tuples of padding values for both input image and ground truth image.
 - `sz`: size of input/ground truth image
-- `padding`: tell if convolutions ar padded
+- `padding`: tell if convolutions are padded or not
 - `nlevels`: number of levels in U-Net architecture
 
 # Example
