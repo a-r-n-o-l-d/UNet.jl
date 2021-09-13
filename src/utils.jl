@@ -100,18 +100,6 @@ adjustsize(sz::Tuple, p, n) = adjustsize(sz, padding = p, nlevels = n)
 
 adjustsize(sz::Tuple; kwargs...) = @. adjustsize(sz; kwargs...)
 
-#=
-Return a tuple of padding values for both input image and ground truth image.
-    is : input size
-    d : U-Net depth (default 4, as in original implementation)
-    nc : number of unpadded convolution per U-block (default 2, as in original implementation)
-    
-    using Images, ImageIO
-    
-    ip, gp = upadding((256, 256))
-    pimg = padarray(img, Pad(:reflect, ip...))
-    pgth = padarray(gth, Pad(:reflect, gp...))
-=#
 """
     padding(sz; padding, nlevels)
 Computes two tuples of padding values for both input image and ground truth image.
