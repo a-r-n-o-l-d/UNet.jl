@@ -108,12 +108,25 @@ Return a tuple of padding values for both input image and ground truth image.
     
     using Images, ImageIO
     
-    ip, op = upadding((256, 256))
+    ip, gp = upadding((256, 256))
     pimg = padarray(img, Pad(:reflect, ip...))
-    pgth = padarray(gth, Pad(:reflect, op...))
+    pgth = padarray(gth, Pad(:reflect, gp...))
 =#
 """
+    padding(sz; padding, nlevels)
+Computes two tuples of padding values for both input image and ground truth image.
+- `sz`: size of input/ground truth image
+- `padding`: 
+- `nlevels`: number of levels in U-Net architecture
 
+# Example
+```jldoctest
+using Images
+    
+ip, gp = upadding((256, 256))
+pimg = padarray(img, Pad(:reflect, ip...))
+pgth = padarray(gth, Pad(:reflect, gp...))
+```
 """
 function padding(sz; padding, nlevels)
     ns = adjustsize(sz, padding, nlevels)
