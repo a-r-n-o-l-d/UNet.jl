@@ -18,6 +18,11 @@ julia> chcat(x1, x2) |> size
 """
 chcat(x...) = cat(x...; dims = (x[1] |> size |> length) - 1)
 
+"""
+    checksize(sz; padding, nlevels)
+Check if image size is appropriate with a given U-Net architecture. sz could be 
+an `Int` or a `Tuple` of `Int`.
+"""
 function checksize(sz::Int; padding, nlevels) # mod(sz, 2^nlevels) == 0
     # number of trimmed pixels due to convolutions
     pl = padding ? 0 : 4
