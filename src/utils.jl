@@ -74,7 +74,8 @@ outputsize(sz, p, n) = outputsize(sz; padding = p, nlevels = n)
 
 """
     adjustsize(sz; padding, nlevels)
-
+Computes an image size compatible with a gigen U-Net architecture, from a given
+image size `sz` (`Int` or `Tuple` of `Int`).
 """
 function adjustsize(sz::Int; padding, nlevels)
     # Number of trimmed pixels if unpadded convolutions
@@ -111,6 +112,9 @@ Return a tuple of padding values for both input image and ground truth image.
     pimg = padarray(img, Pad(:reflect, ip...))
     pgth = padarray(gth, Pad(:reflect, op...))
 =#
+"""
+
+"""
 function padding(sz; padding, nlevels)
     ns = adjustsize(sz, padding, nlevels)
     pa = @. (ns - sz) / 2
