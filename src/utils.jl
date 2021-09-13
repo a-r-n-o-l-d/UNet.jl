@@ -121,11 +121,20 @@ Computes two tuples of padding values for both input image and ground truth imag
 
 # Example
 ```jldoctest
-using Images
-    
-ip, gp = upadding((256, 256))
-pimg = padarray(img, Pad(:reflect, ip...))
-pgth = padarray(gth, Pad(:reflect, gp...))
+julia> using Images
+
+julia> using UNet: padding
+
+julia> img = fill(RGB(1, 1, 1), (256, 256));
+
+julia> gth = fill(RGB(1, 1, 1), (256, 256));
+
+julia> ip, gp = padding(size(img), padding = false, nlevels = 4)
+(((94, 94), (94, 94)), ((2, 2), (2, 2)))
+
+julia> pimg = padarray(img, Pad(:reflect, ip...));
+
+julia> pgth = padarray(gth, Pad(:reflect, gp...));
 ```
 """
 function padding(sz; padding, nlevels)
