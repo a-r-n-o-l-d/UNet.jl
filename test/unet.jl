@@ -23,7 +23,7 @@ end
         if vl && up == :bilinear
             continue
         end
-        model = unet(inchannels = ic, nclasses = nc, volume = vl, base = 4,
+        model = unet(inchannels = ic, nclasses = nc, volume = vl, basewidth = 4,
             batchnorm = bn, padding = pg, upsample = up, nlevels = 2)
         x, ys = dummy_data(inchannels = ic, nclasses = nc, volume = vl,
             padding = pg, nlevels = 2)

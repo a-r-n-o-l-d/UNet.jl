@@ -7,7 +7,7 @@ WHDCN (width, height, depth, channels, batch) in 3D context. Channels are
 assumed to be the penultimate dimension.
 
 # Example
-```jldoctest
+```julia
 julia> x1 = rand(32, 32, 4, 6); # a batch of 6 images (32x32) with 4 channels
 
 julia> x2 = rand(32, 32, 4, 6); # a batch of 6 images (32x32) with 4 channels
