@@ -20,10 +20,13 @@ Build a [U-Net](https://arxiv.org/abs/1505.04597v1) to process images with
 `inchannels` channels (e.g. `inchannels` = 3 for RGB images). Default argument
 values correspond to the original paper with unpadded convolutions.
 
-- `nclasses`: number of pixel classes
+- `nclasses`: number of pixel classes. If `nclasses` = 1 the final layer have 
+one channel with a sigmoid activation function, otherwise the final layer have
+`nclasses` channels followed by a softmax function.
 - `volume`: set to `true` to process tri-dimensional datas
-- `basewidth`: base number of convolution filters, the number of filters/channels is
-multiplied by two at each U-Net level
+- `basewidth`: base number of channels, the number of filters/channels is
+multiplied by two at each U-Net level. Notice that `basewidth` should be a power
+of two number, other values could lead to unfunctionnal U-Net.
 - `batchnorm`: if `true` add a `BatchNorm` layer after each convolution
 - `padding`: if `true` convolutions are padded
 - `upsample`: either `:convt` (`ConvTranspose` layer), `:nearest` or `:bilinear`
@@ -31,7 +34,7 @@ multiplied by two at each U-Net level
 - `nlevels`: number of level or depth of the U-Net
 """
 function unet(; inchannels,
-                nclasses = 2,
+                nclasses = 1,
                 volume = false,
                 basewidth = 64,
                 # expansion = 2,
@@ -89,7 +92,7 @@ function level_enc_dec(lvl, pars)
         # build classifier layers
         k₁ = pars[:k₁]
         nc = pars[:nclasses]
-        if nc > 2
+        if nc > 1
             d = length(k₁)
             cl = [Conv(k₁, dc[3] => nc), x -> softmax(x, dims = d)]
         else
@@ -118,7 +121,7 @@ end
 double_conv(ic, mc, oc, pars) = double_conv((ic, mc, oc), pars)
 
 # Compute encoder/decoder number of channels at a given level (lvl)
-# return two tuples one for encoder and one for decoder 
+# return two tuples one for encoder and one for decoder
 function level_channels(lvl, pars)
     inchannels, basewidth = pars[:inchannels], pars[:basewidth]
     upsample = pars[:upsample]
