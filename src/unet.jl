@@ -61,9 +61,10 @@ function unet(; inchannels,
     # compute encoder and decoders for each level
     enc, dec, con = [], [], []
     for l ∈ 1:nlevels
-        e, d = level_enc_dec(l, pars)
-        push!(enc, e)
-        push!(dec, d)
+        # e, d = level_enc_dec(l, pars)
+        # push!(enc, e)
+        # push!(dec, d)
+        push!.((enc, dec), level_enc_dec(l, pars))
         if padding
             push!(con, chcat)
         else
