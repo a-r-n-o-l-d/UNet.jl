@@ -22,7 +22,7 @@ Build a [U-Net](https://arxiv.org/abs/1505.04597v1) to process images with
 values correspond to the original paper implementation with unpadded
 convolutions.
 
-* `nclasses`: number of pixel classes. If `nclasses` = 1 the final layer have
+* `nclasses`: number of pixel classes. If `nclasses` = 2 the final layer have
   one channel with a sigmoid activation function, otherwise the final layer have
   `nclasses` channels followed by a softmax function.
 * `volume`: set to `true` to process tri-dimensional datas
@@ -36,7 +36,7 @@ convolutions.
 * `nlevels`: number of level or depth of the U-Net
 """
 function unet(; inchannels,
-                nclasses = 1,
+                nclasses = 2,
                 volume = false,
                 basewidth = 64,
                 # expansion = 2,
@@ -95,7 +95,7 @@ function level_enc_dec(lvl, pars)
         # build classifier layers
         k₁ = pars[:k₁]
         nc = pars[:nclasses]
-        if nc > 1
+        if nc > 2
             d = length(k₁)
             cl = [Conv(k₁, dc[3] => nc), x -> softmax(x, dims = d)]
         else
