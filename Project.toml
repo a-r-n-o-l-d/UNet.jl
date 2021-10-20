@@ -1,7 +1,7 @@
 name = "UNet"
 uuid = "76fcf035-82d7-4832-bb3a-93f42258e03f"
 authors = ["Arnold"]
-version = "0.1.0"
+version = "0.2.3"
 
 [deps]
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
