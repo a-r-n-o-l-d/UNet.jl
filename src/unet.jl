@@ -60,7 +60,7 @@ function unet(; inchannels,
             padding = padding,
             upsample = upsample)
 
-    # compute encoder and decoders for each level
+    # Build encoders and decoders for each level
     enc, dec, con = [], [], []
     for l ∈ 1:nlevels
         # e, d = level_enc_dec(l, pars)
@@ -74,7 +74,7 @@ function unet(; inchannels,
         end
     end
 
-    # bridge (i.e. bottom part)
+    # Build bridge (i.e. bottom part)
     ec, dc = level_channels(nlevels + 1, pars)
     ic, mc, _ = ec
     _, _, oc = dc
@@ -125,6 +125,9 @@ double_conv(ic, mc, oc, pars) = double_conv((ic, mc, oc), pars)
 
 # Compute encoder/decoder number of channels at a given level (lvl)
 # return two tuples one for encoder and one for decoder
+# formula : 
+#  ice = expansion^(lvl - 2) * basewidth
+#  mce = expansion^(lvl - 1) * basewidth
 function level_channels(lvl, pars)
     inchannels, basewidth = pars[:inchannels], pars[:basewidth]
     upsample = pars[:upsample]
